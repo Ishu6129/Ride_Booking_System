@@ -1,19 +1,19 @@
 // backend/socket/index.js
-const { Server } = require('socket.io');
-const socketManager = require('./socketManager');
+const { Server } = require("socket.io");
+const socketManager = require("./socketManager");
 
-module.exports = function setupSocketServer(httpServer) {
-  const io = new Server(httpServer, {
+module.exports = (server) => {
+  const io = new Server(server, {
     cors: {
-      origin: '*', // in production restrict origin
-      methods: ['GET', 'POST']
-    },
-    pingTimeout: 20000
+      origin: "*",
+      methods: ["GET", "POST"]
+    }
   });
 
-  // initialize socket manager (pass io)
+  // Pass io to socket manager
   socketManager(io);
 
-  console.log('Socket.IO server initialized');
+  console.log("🔌 Socket.IO initialized");
+
   return io;
 };
