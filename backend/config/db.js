@@ -1,29 +1,23 @@
-const mongoose = require("mongoose");
+require("dotenv").config();
+const { MongoClient } = require("mongodb");
 
-let dbConnection = null;
+const uri = process.env.MONGO_URL;  
+const client = new MongoClient(uri);
+
+let db;
 
 async function connectDB() {
-    const uri = process.env.MONGO_URI;
-
-    if (!uri) {
-        console.error("❌ MONGO_URI missing in .env");
-        process.exit(1);
-    }
-
     try {
-        dbConnection = await mongoose.connect(uri, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true
-        });
-        console.log("✅ MongoDB Connected");
+        await client.connect();
+        db = client.db();  
+        console.log("✅ MongoDB Connected Successfully");
     } catch (error) {
-        console.error("❌ MongoDB Error:", error.message);
-        process.exit(1);
+        console.log("❌ MongoDB Connection Error:", error);
     }
 }
 
 function getDB() {
-    return dbConnection;
+    return db;
 }
 
 module.exports = { connectDB, getDB };
