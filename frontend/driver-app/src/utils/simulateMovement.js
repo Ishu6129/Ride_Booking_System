@@ -1,40 +1,28 @@
-export default function simulateMovement({ from, to, onStep, onArrive, interval = 2000, stepDelta = 0.0005 }) {
-  let lat = from.lat;
-  let lng = from.lng;
-  const targetLat = to.lat;
-  const targetLng = to.lng;
+let __simInterval = null;
 
-  let stopped = false;
-
-  function step() {
-    if (stopped) return;
-    const latDiff = targetLat - lat;
-    const lngDiff = targetLng - lng;
-    const distance = Math.sqrt(latDiff * latDiff + lngDiff * lngDiff);
-    if (distance < stepDelta * 1.5) {
-      // Arrived
-      lat = targetLat;
-      lng = targetLng;
-      if (onStep) onStep({ lat, lng });
-      if (onArrive) onArrive();
-      return;
-    }
-    // Move proportionally
-    const ratio = stepDelta / distance;
-    lat += latDiff * ratio;
-    lng += lngDiff * ratio;
-    if (onStep) onStep({ lat, lng });
-
-    // schedule
-    setTimeout(step, interval);
+export function startSimulation({ startLat, startLng, onTick, step = 0.0005, intervalMs = 1500 }) {
+  let lat = Number(startLat);
+  let lng = Number(startLng);
+  if (isNaN(lat) || isNaN(lng)) {
+    throw new Error("startSimulation: startLat/startLng must be numbers");
   }
 
-  // kick off
-  setTimeout(step, interval);
+  stopSimulation();
 
-  return {
-    stop: () => {
-      stopped = true;
-    },
+  __simInterval = setInterval(() => {
+    lat += (Math.random() - 0.5) * step;
+    lng += (Math.random() - 0.5) * step;
+    onTick({ lat, lng });
+  }, intervalMs);
+
+  return function stop() {
+    stopSimulation();
   };
+}
+
+export function stopSimulation() {
+  if (__simInterval) {
+    clearInterval(__simInterval);
+    __simInterval = null;
+  }
 }

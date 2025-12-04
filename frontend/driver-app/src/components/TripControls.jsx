@@ -1,84 +1,24 @@
-import React, { useEffect, useRef, useState } from "react";
-import socket from "../socket";
-import simulateMovement from "../utils/simulateMovement";
+import React from "react";
+import { startTrip, completeTrip } from "../services/driverSocket";
 
-export default function TripControls({ ride, setCurrentRide, driverPos, setDriverPos }) {
-  const [status, setStatus] = useState("accepted"); // accepted -> arrived -> in_progress -> completed
-  const simRef = useRef(null);
+export default function TripControls({ ride, onComplete }) {
+  const rideId = ride?.rideId;
 
-  useEffect(() => {
-    // When ride accepted, start sim toward pickup
-    if (status === "accepted") {
-      // start simulation to pickup
-      simRef.current = simulateMovement({
-        from: driverPos,
-        to: ride.pickup,
-        onStep: (pos) => {
-          setDriverPos(pos);
-          socket.emit("driver_location", { driverId: socket.id, position: pos, rideId: ride.id });
-        },
-        onArrive: () => {
-          setStatus("arrived");
-        },
-        interval: 2000,
-        stepDelta: 0.0005,
-      });
-    }
-
-    return () => {
-      // cleanup
-      if (simRef.current && simRef.current.stop) simRef.current.stop();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const startTrip = () => {
-    // stop any previous sim
-    if (simRef.current && simRef.current.stop) simRef.current.stop();
-
-    setStatus("in_progress");
-    socket.emit("trip_started", { rideId: ride.id, driverId: socket.id });
-
-    // simulate movement to destination (if provided) — here we use pickup -> dummy destination or ride.destination
-    const dest = ride.destination || { lat: ride.pickup.lat + 0.02, lng: ride.pickup.lng + 0.02 };
-    simRef.current = simulateMovement({
-      from: driverPos,
-      to: dest,
-      onStep: (pos) => {
-        setDriverPos(pos);
-        socket.emit("driver_location", { driverId: socket.id, position: pos, rideId: ride.id });
-      },
-      onArrive: () => {
-        setStatus("completed");
-      },
-      interval: 2000,
-      stepDelta: 0.0007,
-    });
-  };
-
-  const endTrip = () => {
-    // stop simulation
-    if (simRef.current && simRef.current.stop) simRef.current.stop();
-    socket.emit("trip_completed", { rideId: ride.id, driverId: socket.id });
-    setCurrentRide(null);
-  };
+  function handleStart() {
+    startTrip(rideId);
+  }
+  function handleComplete() {
+    completeTrip(rideId);
+    if (onComplete) onComplete();
+  }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-      <p>Status: {status}</p>
-      {status === "arrived" && (
-        <button className="btn btn-start" onClick={startTrip}>Start Trip</button>
-      )}
-      {status === "in_progress" && (
-        <button className="btn btn-end" onClick={endTrip}>End Trip</button>
-      )}
-      {status === "accepted" && <p>Heading to pickup…</p>}
-      {status === "completed" && (
-        <div>
-          <p>Trip completed</p>
-          <button className="btn" onClick={() => setCurrentRide(null)}>Clear</button>
-        </div>
-      )}
+    <div className="popup">
+      <div><strong>Active Ride:</strong> {rideId}</div>
+      <div style={{ marginTop: 8, display: "flex", gap: 8 }}>
+        <button onClick={handleStart}>Start Trip</button>
+        <button onClick={handleComplete}>Complete Trip</button>
+      </div>
     </div>
   );
 }

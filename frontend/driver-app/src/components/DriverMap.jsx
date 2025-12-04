@@ -1,55 +1,67 @@
-import React, { useEffect } from "react";
-import { MapContainer, TileLayer, Marker, useMap } from "react-leaflet";
+import React, { useEffect, useRef, useState } from "react";
 import L from "leaflet";
-import socket from "../socket";
+import "leaflet/dist/leaflet.css";
+import { sendLocation } from "../services/driverSocket";
+import { startSimulation, stopSimulation } from "../utils/simulateMovement";
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl:
-    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png"
 });
 
-function FlyTo({ pos }) {
-  const map = useMap();
-  useEffect(() => {
-    if (pos) {
-      map.setView([pos.lat, pos.lng], map.getZoom());
-    }
-  }, [pos, map]);
-  return null;
-}
+export default function DriverMap({ driverId, acceptedRide }) {
+  const mapRef = useRef(null);
+  const driverMarkerRef = useRef(null);
+  const [coords, setCoords] = useState({ lat: 12.9716, lng: 77.5946 });
 
-export default function DriverMap({ driverPos, setDriverPos, currentRide }) {
-  // Listen for external driver position control (simulateMovement will emit)
+  // init map
   useEffect(() => {
-    // nothing here - position changes from simulateMovement in TripControls
+    if (!mapRef.current) {
+      mapRef.current = L.map("driverMap").setView([coords.lat, coords.lng], 13);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "&copy; OpenStreetMap contributors"
+      }).addTo(mapRef.current);
+      driverMarkerRef.current = L.marker([coords.lat, coords.lng]).addTo(mapRef.current).bindPopup("You");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Optionally, emit current position occasionally if online
+  // update marker when coords change
   useEffect(() => {
-    const emitPos = () => {
-      socket.emit("driver_location", {
-        driverId: socket.id,
-        position: driverPos,
-        rideId: currentRide ? currentRide.id : null,
-      });
-    };
-    const tid = setInterval(emitPos, 5000);
-    return () => clearInterval(tid);
-  }, [driverPos, currentRide]);
+    if (driverMarkerRef.current) {
+      driverMarkerRef.current.setLatLng([coords.lat, coords.lng]);
+      mapRef.current.setView([coords.lat, coords.lng]);
+    }
+  }, [coords]);
 
-  return (
-    <div className="map-wrap">
-      <MapContainer center={[driverPos.lat, driverPos.lng]} zoom={13} style={{ height: "500px" }}>
-        <TileLayer
-          attribution='&copy; OpenStreetMap contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        <Marker position={[driverPos.lat, driverPos.lng]} />
-        <FlyTo pos={driverPos} />
-      </MapContainer>
-    </div>
-  );
+  // start simulation when a ride is accepted
+  useEffect(() => {
+    let stop = null;
+    if (acceptedRide) {
+      // start simulation from pickup (if provided)
+      const startLat = acceptedRide.pickup?.lat ?? coords.lat;
+      const startLng = acceptedRide.pickup?.lng ?? coords.lng;
+      setCoords({ lat: startLat, lng: startLng });
+
+      stop = startSimulation({
+        startLat,
+        startLng,
+        onTick: ({ lat, lng }) => {
+          setCoords({ lat, lng });
+          sendLocation(driverId, lat, lng); // emit to server
+        },
+        step: 0.0006,
+        intervalMs: 1200
+      });
+    }
+    return () => {
+      if (stop) stop();
+      stopSimulation();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [acceptedRide]);
+
+  return <div id="driverMap" style={{ height: "100%", width: "100%" }} />;
 }
