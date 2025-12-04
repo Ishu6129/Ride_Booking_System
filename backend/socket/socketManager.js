@@ -1,9 +1,7 @@
-// backend/socket/socketManager.js
 const store = require("./inMemoryStore");
 const { haversineDistance, log } = require("./utils");
 const { v4: uuidv4 } = require("uuid");
 
-// DB Services (from Member 5)
 const {
   upsertDriverStatus,
   setDriverOnline
