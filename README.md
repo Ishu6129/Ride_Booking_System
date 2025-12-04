@@ -244,3 +244,7 @@ The README is now ready for:
 *Status:* ✅ Complete and verified
 
 All project documentation is now comprehensive and user-friendly! 🎉
+
+![WhatsApp Image 2025-12-04 at 13 27 16_90d15b35](https://github.com/user-attachments/assets/c96faac4-ced4-42ce-9352-2499042124cf)<br>
+![WhatsApp Image 2025-12-04 at 13 29 26_db178c00](https://github.com/user-attachments/assets/ab93a0db-d2e1-45c2-9bba-f758855381fb)
+
