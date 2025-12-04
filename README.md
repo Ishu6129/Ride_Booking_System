@@ -86,9 +86,6 @@ Design and develop a *complete real-time ride-hailing platform* (similar to Ola/
 
 ---
 
-## 📁 Folder Structure
-<img width="284" height="642" alt="image" src="https://github.com/user-attachments/assets/6b6c7ac7-1441-4744-bbbc-e71182cc8f12" /><br>
-
 ---
 
 ## 🚀 Project Setup Instructions
@@ -720,5 +717,6 @@ A complete, production-ready real-time ride-hailing platform built with modern w
 *Version:* 1.0.0
 
 ---
+
 
 
