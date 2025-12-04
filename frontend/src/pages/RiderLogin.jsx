@@ -5,6 +5,7 @@ import { authAPI } from '../services/api';
 import { ToastContainer, toast } from 'react-toastify';
 
 export const RiderLogin = () => {
+  const [role, setRole] = useState('rider');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -19,12 +20,14 @@ export const RiderLogin = () => {
       const response = await authAPI.login({ email, password });
       const { token, user } = response.data;
 
-      setAuth(user, token, user.role);
+      setAuth(user, token, user.role || role);
       toast.success('Login successful');
-      
+
+      const targetRole = user.role || role;
       setTimeout(() => {
-        navigate('/rider/home');
-      }, 1000);
+        if (targetRole === 'driver') navigate('/driver/home');
+        else navigate('/rider/home');
+      }, 800);
     } catch (error) {
       toast.error(error.response?.data?.message || 'Login failed');
     } finally {
@@ -32,10 +35,28 @@ export const RiderLogin = () => {
     }
   };
 
+  const switchTo = (r) => setRole(r);
+
   return (
     <div className="flex items-center justify-center min-h-screen bg-blue-600">
       <div className="bg-white rounded-lg shadow-lg p-8 w-96">
-        <h2 className="text-2xl font-bold text-center mb-6">Rider Login</h2>
+        <div className="flex gap-2 justify-center mb-6">
+          <button
+            onClick={() => switchTo('rider')}
+            className={`px-3 py-1 rounded ${role === 'rider' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}
+          >
+            Login as Rider
+          </button>
+          <button
+            onClick={() => switchTo('driver')}
+            className={`px-3 py-1 rounded ${role === 'driver' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}
+          >
+            Login as Driver
+          </button>
+        </div>
+
+        <h2 className="text-2xl font-bold text-center mb-4">{role === 'driver' ? 'Driver Login' : 'Rider Login'}</h2>
+
         <form onSubmit={handleLogin}>
           <input
             type="email"
@@ -64,7 +85,7 @@ export const RiderLogin = () => {
         <p className="text-center text-gray-600">
           Don't have an account?{' '}
           <button
-            onClick={() => navigate('/rider/register')}
+            onClick={() => navigate(role === 'driver' ? '/driver/register' : '/rider/register')}
             className="text-blue-600 font-semibold hover:underline"
           >
             Register

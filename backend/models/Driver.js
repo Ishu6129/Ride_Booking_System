@@ -5,6 +5,7 @@ const driverSchema = new mongoose.Schema({
   licenseNumber: {
     type: String,
     unique: true,
+    sparse: true,
     required: true
   },
   licenseExpiry: Date,
@@ -12,6 +13,7 @@ const driverSchema = new mongoose.Schema({
   vehicleNumber: {
     type: String,
     unique: true,
+    sparse: true,
     required: true
   },
   vehicleType: {
@@ -66,7 +68,7 @@ const driverSchema = new mongoose.Schema({
     enum: ['pending', 'verified', 'rejected'],
     default: 'pending'
   }
-}, { discriminatorKey: 'role' });
+});
 
 // Geospatial index for location queries
 driverSchema.index({ currentLocation: '2dsphere' });

@@ -37,7 +37,9 @@ export const RiderRegister = () => {
         navigate('/rider/home');
       }, 1000);
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Registration failed');
+      const errorMessage = error.response?.data?.message || error.message || 'Registration failed';
+      console.error('Registration error:', error.response?.data || error);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
