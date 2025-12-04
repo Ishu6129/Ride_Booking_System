@@ -1,248 +1,177 @@
-🚖 Ride Booking System
-Full-Stack Development Team Exam – Final Submission
-Repository: https://github.com/Ishu6129/Ride_Booking_System
-Status: ✔ Fully Working (Locally) – Rider App + Driver App + Backend
-Live Deployment: ❌ Not deployed (Running locally)
-Maps Used: ✔ Leaflet + OpenStreetMap (FREE, no API key needed)
+project: "Ride Booking System"
+status: "Fully Working Locally"
+deployment: "Not Deployed"
+maps_used: "Leaflet + OpenStreetMap (Free, No API Key Required)"
 
-📌 1. Problem Statement
-Develop a real-time ride-hailing application (similar to Ola/Uber) that connects Riders with Drivers in real time.
+repository: "https://github.com/Ishu6129/Ride_Booking_System"
 
-✔ Core Features Implemented
-Real-time communication (Socket.io)
+team:
+  - member_1: "Rider Frontend"
+  - member_2: "Driver Frontend"
+  - member_3: "Backend (REST API)"
+  - member_4: "WebSocket Developer"
+  - member_5: "Database + Integration"
 
-Nearest driver matching (in-memory + Haversine distance)
+problem_statement:
+  description: >
+    Build a real-time ride-hailing system where Riders can request rides,
+    Drivers receive and accept ride requests, and both sides experience
+    live location tracking through WebSockets.
 
-Rider requests a ride → Driver gets popup
+features:
+  rider_features:
+    - "Request a ride"
+    - "Live driver tracking"
+    - "Driver found notification"
+    - "Trip start/complete updates"
+  driver_features:
+    - "Go online/offline"
+    - "Receive ride offers"
+    - "Accept ride"
+    - "Simulated live movement"
+    - "Trip start/complete"
+  backend_features:
+    - "Nearest driver matching"
+    - "Haversine distance calculation"
+    - "Socket.io real-time communication"
+  database_features:
+    - "Ride storage"
+    - "Driver location updates"
+    - "Status updates"
+    - "MongoDB Atlas integration"
 
-Driver accepts → Rider sees assigned driver
+tech_stack:
+  frontend:
+    - React
+    - Leaflet (OpenStreetMap)
+    - Socket.io-client
+    - Axios
+  backend:
+    - Node.js
+    - Express.js
+    - Socket.io
+    - MongoDB Atlas (Mongoose)
+  environment:
+    - "All services run locally"
+    - "Rider App: http://localhost:3000"
+    - "Driver App: http://localhost:3001"
+    - "Backend: http://localhost:5000"
 
-Live tracking: driver's marker moves across map
+folder_structure: |
+  Ride_Booking_System/
+  ├── backend/
+  │   ├── server.js
+  │   ├── .env.example
+  │   ├── config/
+  │   │   └── db.js
+  │   ├── models/
+  │   │   ├── Driver.js
+  │   │   ├── Ride.js
+  │   │   └── User.js
+  │   ├── services/
+  │   ├── socket/
+  │   │   ├── index.js
+  │   │   ├── socketManager.js
+  │   │   ├── inMemoryStore.js
+  │   │   └── utils.js
+  │   
+  ├── rider-frontend/
+  ├── driver-frontend/
+  └── README.md
 
-Trip lifecycle → Start Trip / Complete Trip
+setup:
+  clone_repo: "git clone https://github.com/Ishu6129/Ride_Booking_System.git"
+  backend:
+    steps:
+      - "cd backend"
+      - "npm install"
+      - "cp .env.example .env"
+      - "npm start"
+    env_variables:
+      MONGO_URI: "your_mongodb_atlas_link"
+      PORT: "5000"
 
-MongoDB connection with proper schema
+  rider_frontend:
+    steps:
+      - "cd rider-frontend"
+      - "npm install"
+      - "npm start"
+    runs_on: "http://localhost:3000"
 
-Two separate frontends:
+  driver_frontend:
+    steps:
+      - "cd driver-frontend"
+      - "npm install"
+      - "npm start"
+    runs_on: "http://localhost:3001"
 
-Rider App
+socket_events:
+  rider_to_server:
+    - "rider_join"
+    - "ride_request"
 
-Driver App
+  server_to_rider:
+    - "ride_searching"
+    - "driver_found"
+    - "driver_location_update"
+    - "trip_started"
+    - "trip_completed"
 
-👥 2. Team Members & Responsibilities
-Member	Work
-1. Rider Frontend	Rider UI, Map, Ride Request, Tracking
-2. Driver Frontend	Online toggle, Incoming ride popup, Live location
-3. Backend (REST API)	API endpoints, ride creation, server setup
-4. WebSockets	socketManager.js, events, real-time logic
-5. Database Integration	MongoDB schemas, services, connection, testing
-🛠 3. Tech Stack
-Frontend
-React.js
+  driver_to_server:
+    - "driver_online"
+    - "ride_accept"
+    - "driver_location"
+    - "trip_started"
+    - "trip_completed"
+    - "driver_offline"
 
-Leaflet (OpenStreetMap → Free, no API key required)
+  server_to_driver:
+    - "ride_offer"
 
-Socket.io-client
+database_schema:
+  driver:
+    - driverId
+    - lat
+    - lng
+    - online
+  ride:
+    - rideId
+    - riderId
+    - driverId
+    - pickup: {lat, lng}
+    - drop: {lat, lng}
+    - fareEstimate
+    - status: ["requested", "accepted", "started", "completed"]
 
-Axios
+local_testing_steps:
+  - "Start backend on port 5000"
+  - "Start Rider frontend on port 3000"
+  - "Start Driver frontend on port 3001"
+  - "Driver → Go Online"
+  - "Rider → Request Ride"
+  - "Driver receives popup → Accept Ride"
+  - "Driver movement auto-simulates"
+  - "Rider sees live tracking"
+  - "Driver → Start Trip → Complete Trip"
 
-Backend
-Node.js
+git_workflow:
+  rules:
+    - "Each member creates feature branch"
+    - "No direct commit to main"
+    - "Every task merged via Pull Request"
+    - "At least 2 reviewers required"
+  branch_format: "feature-<name>-<task>"
 
-Express.js
+project_status:
+  frontends: "Complete"
+  backend: "Complete"
+  websockets: "Working"
+  database: "Working"
+  deployment: "Not deployed"
+  documentation: "Complete"
 
-Socket.io
-
-MongoDB Atlas (FREE tier)
-
-Mongoose
-
-Environment
-Runs completely locally
-
-No paid API used
-
-No Google Maps
-
-📁 4. Folder Structure
-Ride_Booking_System/
-│
-├── backend/
-│   ├── server.js
-│   ├── package.json
-│   ├── .env.example
-│   │
-│   ├── config/
-│   │   └── db.js
-│   │
-│   ├── models/
-│   │   ├── Driver.js
-│   │   ├── Ride.js
-│   │   └── User.js (optional)
-│   │
-│   ├── services/
-│   │   ├── driverService.js
-│   │   └── rideService.js
-│   │
-│   ├── socket/
-│   │   ├── index.js
-│   │   ├── socketManager.js
-│   │   ├── inMemoryStore.js
-│   │   └── utils.js
-│   │
-│   └── routes/ (minimal)
-│
-├── rider-frontend/
-│   └── src/
-│       ├── components/
-│       ├── services/
-│       ├── pages/
-│       └── sockets/
-│
-├── driver-frontend/
-│   └── src/
-│       ├── components/
-│       ├── services/
-│       └── utils/
-│
-└── README.md
-⚙️ 5. Project Setup (Local Only)
-1️⃣ Clone Repo
-git clone https://github.com/Ishu6129/Ride_Booking_System.git
-cd Ride_Booking_System
-2️⃣ Backend Setup
-cd backend
-npm install
-cp .env.example .env
-Fill .env:
-
-MONGO_URI=your_mongodb_atlas_link
-PORT=5000
-Start backend:
-
-npm start
-Runs at: http://localhost:5000
-
-3️⃣ Rider Frontend Setup
-cd rider-frontend
-npm install
-npm start
-Runs at: http://localhost:3000
-
-4️⃣ Driver Frontend Setup
-cd driver-frontend
-npm install
-npm start
-Runs at: http://localhost:3001
-
-🛰 6. WebSocket Events
-Rider → Server
-rider_join
-
-ride_request
-
-Server → Rider
-ride_searching
-
-driver_found
-
-driver_location_update
-
-trip_started
-
-trip_completed
-
-Driver → Server
-driver_online
-
-ride_accept
-
-driver_location
-
-trip_started
-
-trip_completed
-
-driver_offline
-
-Server → Driver
-ride_offer
-
-🗄 7. Database Schema Summary
-🟦 Drivers
-driverId
-lat
-lng
-online
-🟩 Rides
-rideId
-riderId
-driverId
-pickup { lat, lng }
-drop { lat, lng }
-fareEstimate
-status (requested, accepted, started, completed)
-Stored using MongoDB Atlas (Free Tier).
-
-🚀 8. Features Working in Local Demo
-Feature	Status
-Rider UI (React + Leaflet)	✔ Working
-Driver UI (React + Leaflet)	✔ Working
-Ride Request	✔ Working
-Driver Online/Offline	✔ Working
-Nearest Driver Matching	✔ Working
-Real-time ride offer popup	✔ Working
-Accept Ride	✔ Working
-Live Driver Location	✔ Working
-Trip Start / Complete	✔ Working
-MongoDB Integration	✔ Working
-🧪 9. Local Testing Steps
-1. Start backend
-2. Open Rider frontend (http://localhost:3000)
-3. Open Driver frontend (http://localhost:3001)
-4. Driver → Go Online
-5. Rider → Request Ride
-6. Driver → Accept Ride (popup shows)
-7. Driver location starts moving (simulated)
-8. Rider sees live movement
-9. Driver → Start Trip → Complete Trip
-Everything works smoothly in local environment.
-
-🤝 10. Git & PR Workflow (MANDATORY for Exam)
-✔ Each member used a feature branch
-✔ No direct commits to main
-✔ PR reviewed by teammates
-✔ Team Lead merged after approval
-
-Branch format:
-
-feature-<name>-<task>
-Example:
-
-feature-vinay-websocket
-feature-techno-driver-ui
-feature-ishu-rider-ui
-feature-arun-backend-api
-feature-sunil-database
-📌 11. Current Status
-Item	Status
-Frontends	✔ Complete
-Backend	✔ Complete
-Real-time socket	✔ Working
-DB Integration	✔ Working
-Deployment	❌ Not deployed (runs locally only)
-Documentation	✔ Included
-🎉 12. Conclusion
-This project is a fully functional real-time ride-hailing system built as part of the Full-Stack Team Exam using:
-
-React
-
-Node.js + Express
-
-Socket.io
-
-MongoDB Atlas
-
-Leaflet + OpenStreetMap
-
-The entire system runs perfectly in local environment and meets all required functional specifications.
+conclusion: >
+  The Ride Booking System is a fully functional real-time ride-hailing
+  project built with React, Node.js, Socket.io, MongoDB, and Leaflet.
+  All features work perfectly on local setup and fulfill exam
+  requirements for real-time full-stack development.
