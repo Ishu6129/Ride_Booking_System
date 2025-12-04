@@ -1,4 +1,3 @@
-// backend/socket/index.js
 const { Server } = require("socket.io");
 const socketManager = require("./socketManager");
 
