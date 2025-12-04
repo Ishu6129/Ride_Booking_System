@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { driverAPI, rideAPI } from '../services/api';
 import { 
@@ -15,14 +14,17 @@ import {
 } from '../services/socket';
 import { useDriverStore, useAuthStore } from '../store';
 import { ToastContainer, toast } from 'react-toastify';
+import {
+  initializeLeafletIcons,
+  driverIcon,
+  pickupIcon,
+  getLocationErrorMessage,
+  DEFAULT_MAP_CENTER,
+  DEFAULT_ZOOM
+} from '../utils/leafletUtils';
 
-// Fix Leaflet marker icons
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png'
-});
+// Initialize Leaflet icons once
+initializeLeafletIcons();
 
 export const DriverHome = () => {
   const [currentLocation, setCurrentLocation] = useState(null);
@@ -54,11 +56,30 @@ export const DriverHome = () => {
             });
           }
         },
-        (error) => toast.error('Failed to get location: ' + error.message),
-        { enableHighAccuracy: true }
+        (error) => {
+          const errorMessage = getLocationErrorMessage(error);
+          toast.error(errorMessage);
+          // Set default location so map can still load
+          setCurrentLocation({
+            lat: DEFAULT_MAP_CENTER[0],
+            lng: DEFAULT_MAP_CENTER[1]
+          });
+        },
+        { 
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        }
       );
 
       return () => navigator.geolocation.clearWatch(watchId);
+    } else {
+      toast.error('Geolocation is not supported by your browser');
+      // Set default location so map can still load
+      setCurrentLocation({
+        lat: DEFAULT_MAP_CENTER[0],
+        lng: DEFAULT_MAP_CENTER[1]
+      });
     }
   }, [isOnline, userId]);
 
@@ -119,21 +140,35 @@ export const DriverHome = () => {
   };
 
   return (
-    <div className="flex h-screen gap-4">
+    <div className="flex h-screen gap-4 bg-gray-50">
       <div className="flex-1">
         {currentLocation ? (
-          <MapContainer center={[currentLocation.lat, currentLocation.lng]} zoom={15} className="w-full h-full rounded-lg">
+          <MapContainer 
+            center={[currentLocation.lat, currentLocation.lng]} 
+            zoom={DEFAULT_ZOOM} 
+            className="w-full h-full rounded-lg"
+            style={{ zIndex: 0 }}
+          >
             <TileLayer
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              maxZoom={19}
             />
-            <Marker position={[currentLocation.lat, currentLocation.lng]}>
-              <Popup>📍 Your Location</Popup>
+            <Marker position={[currentLocation.lat, currentLocation.lng]} icon={driverIcon}>
+              <Popup>
+                <div className="text-center">
+                  <strong>📍 Your Location</strong>
+                  <p className="text-xs text-gray-600">{currentLocation.lat.toFixed(4)}, {currentLocation.lng.toFixed(4)}</p>
+                </div>
+              </Popup>
             </Marker>
           </MapContainer>
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
-            <p className="text-gray-500">Loading map...</p>
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-gray-500">Loading map...</p>
+            </div>
           </div>
         )}
       </div>

@@ -9,6 +9,8 @@ const estimateFare = async (req, res) => {
   try {
     const { pickupLat, pickupLon, dropoffLat, dropoffLon, vehicleType = 'economy' } = req.body;
 
+    console.log('📍 Estimating fare:', { pickupLat, pickupLon, dropoffLat, dropoffLon, vehicleType });
+
     // Validate required fields
     if (!pickupLat || !pickupLon || !dropoffLat || !dropoffLon) {
       return res.status(400).json({ 
@@ -16,14 +18,31 @@ const estimateFare = async (req, res) => {
       });
     }
 
+    // Validate coordinates are numbers
+    if (isNaN(pickupLat) || isNaN(pickupLon) || isNaN(dropoffLat) || isNaN(dropoffLon)) {
+      return res.status(400).json({ 
+        message: 'Coordinates must be valid numbers' 
+      });
+    }
+
+    // Validate vehicle type
+    if (!['economy', 'premium', 'xl'].includes(vehicleType)) {
+      return res.status(400).json({ 
+        message: 'Invalid vehicle type. Use economy, premium, or xl' 
+      });
+    }
+
     // Get route and distance
     const routeData = await getRouteAndDistance(pickupLat, pickupLon, dropoffLat, dropoffLon);
+    console.log('📏 Route calculated:', { distance: routeData.distance, duration: routeData.duration });
 
     // Get pricing for vehicle type
     const pricing = await Price.findOne({ vehicleType });
     if (!pricing) {
-      return res.status(404).json({ message: 'Pricing not found for vehicle type' });
+      return res.status(404).json({ message: `Pricing not found for vehicle type: ${vehicleType}. Please initialize pricing in database.` });
     }
+
+    console.log('💰 Pricing found:', pricing);
 
     // Calculate fare
     const fare = calculateFare(
@@ -35,6 +54,8 @@ const estimateFare = async (req, res) => {
       pricing.minFare
     );
 
+    console.log('✅ Fare calculated:', fare);
+
     res.json({
       distance: routeData.distance,
       duration: routeData.duration,
@@ -42,34 +63,44 @@ const estimateFare = async (req, res) => {
       polyline: routeData.polyline
     });
   } catch (error) {
-    console.error('Estimate fare error:', error);
+    console.error('❌ Estimate fare error:', error.message);
     res.status(500).json({ message: error.message || 'Internal server error' });
   }
 };
 
 const requestRide = async (req, res) => {
   try {
+    console.log('📝 Request ride input:', req.body);
+    console.log('👤 Authenticated user:', req.userId);
+
     const { pickupLat, pickupLon, dropoffLat, dropoffLon, pickupAddress, dropoffAddress, vehicleType = 'economy' } = req.body;
 
     // Validate required fields
     if (!pickupLat || !pickupLon || !dropoffLat || !dropoffLon) {
+      console.error('❌ Missing coordinates:', { pickupLat, pickupLon, dropoffLat, dropoffLon });
       return res.status(400).json({ 
         message: 'Missing required fields: pickupLat, pickupLon, dropoffLat, dropoffLon' 
       });
     }
 
     if (!req.userId) {
+      console.error('❌ User not authenticated');
       return res.status(401).json({ message: 'User not authenticated' });
     }
 
     // Get route and distance
+    console.log('🔄 Calculating route...');
     const routeData = await getRouteAndDistance(pickupLat, pickupLon, dropoffLat, dropoffLon);
+    console.log('✅ Route data:', routeData);
 
     // Get pricing
+    console.log('🔄 Getting pricing for:', vehicleType);
     const pricing = await Price.findOne({ vehicleType });
     if (!pricing) {
+      console.error('❌ Pricing not found for:', vehicleType);
       return res.status(404).json({ message: 'Pricing not found for vehicle type' });
     }
+    console.log('✅ Pricing:', pricing);
 
     // Calculate fare
     const fareData = calculateFare(
@@ -80,6 +111,7 @@ const requestRide = async (req, res) => {
       pricing.perMinuteCharge,
       pricing.minFare
     );
+    console.log('💰 Fare calculated:', fareData);
 
     // Create ride
     const ride = new Ride({
@@ -97,13 +129,19 @@ const requestRide = async (req, res) => {
       distance: routeData.distance,
       duration: routeData.duration,
       fare: {
-        ...fareData,
+        baseFare: fareData.baseFare,
+        distanceFare: fareData.distanceFare,
+        durationFare: fareData.durationFare,
+        totalFare: fareData.totalFare,
+        discount: 0,
         finalFare: fareData.totalFare
       },
       status: 'requested'
     });
 
+    console.log('💾 Saving ride:', ride);
     await ride.save();
+    console.log('✅ Ride saved:', ride._id);
 
     res.status(201).json({
       message: 'Ride requested successfully',
@@ -118,7 +156,12 @@ const requestRide = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Request ride error:', error);
+    console.error('❌ Request ride error:', {
+      message: error.message,
+      stack: error.stack,
+      code: error.code,
+      name: error.name
+    });
     res.status(500).json({ message: error.message || 'Internal server error' });
   }
 };

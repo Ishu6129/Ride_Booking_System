@@ -5,6 +5,7 @@ import { authAPI } from '../services/api';
 import { ToastContainer, toast } from 'react-toastify';
 
 export const DriverLogin = () => {
+  const [role, setRole] = useState('driver');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -19,12 +20,16 @@ export const DriverLogin = () => {
       const response = await authAPI.login({ email, password });
       const { token, user } = response.data;
 
-      setAuth(user, token, user.role);
+      // setAuth expects (user, token, role)
+      setAuth(user, token, user.role || role);
       toast.success('Login successful');
-      
+
+      // Navigate based on selected role (use user.role if returned)
+      const targetRole = user.role || role;
       setTimeout(() => {
-        navigate('/driver/home');
-      }, 1000);
+        if (targetRole === 'driver') navigate('/driver/home');
+        else navigate('/rider/home');
+      }, 800);
     } catch (error) {
       toast.error(error.response?.data?.message || 'Login failed');
     } finally {
@@ -32,10 +37,28 @@ export const DriverLogin = () => {
     }
   };
 
+  const switchTo = (r) => setRole(r);
+
   return (
     <div className="flex items-center justify-center min-h-screen bg-green-600">
       <div className="bg-white rounded-lg shadow-lg p-8 w-96">
-        <h2 className="text-2xl font-bold text-center mb-6">Driver Login</h2>
+        <div className="flex gap-2 justify-center mb-6">
+          <button
+            onClick={() => switchTo('rider')}
+            className={`px-3 py-1 rounded ${role === 'rider' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700'}`}
+          >
+            Login as Rider
+          </button>
+          <button
+            onClick={() => switchTo('driver')}
+            className={`px-3 py-1 rounded ${role === 'driver' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700'}`}
+          >
+            Login as Driver
+          </button>
+        </div>
+
+        <h2 className="text-2xl font-bold text-center mb-4">{role === 'driver' ? 'Driver Login' : 'Rider Login'}</h2>
+
         <form onSubmit={handleLogin}>
           <input
             type="email"
@@ -61,10 +84,11 @@ export const DriverLogin = () => {
             {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>
+
         <p className="text-center text-gray-600">
           Don't have an account?{' '}
           <button
-            onClick={() => navigate('/driver/register')}
+            onClick={() => navigate(role === 'driver' ? '/driver/register' : '/rider/register')}
             className="text-green-600 font-semibold hover:underline"
           >
             Register

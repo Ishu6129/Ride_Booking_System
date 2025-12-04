@@ -91,8 +91,3 @@ module.exports = {
   getRouteAndDistance,
   getAddressFromCoordinates
 };
-
-module.exports = {
-  getRouteAndDistance,
-  getAddressFromCoordinates
-};

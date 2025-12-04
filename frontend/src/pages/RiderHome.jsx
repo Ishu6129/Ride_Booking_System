@@ -1,46 +1,23 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { rideAPI } from '../services/api';
 import { emitRideRequest, initializeSocket, onRideAccepted, onRideRequestConfirmed } from '../services/socket';
-import { useRideStore, useLocationStore } from '../store';
+import { useRideStore } from '../store';
 import { ToastContainer, toast } from 'react-toastify';
+import {
+  initializeLeafletIcons,
+  pickupIcon,
+  dropoffIcon,
+  driverIcon,
+  currentLocationIcon,
+  getLocationErrorMessage,
+  DEFAULT_MAP_CENTER,
+  DEFAULT_ZOOM
+} from '../utils/leafletUtils';
 
-// Fix Leaflet marker icons
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png'
-});
-
-const pickupIcon = new L.Icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-});
-
-const dropoffIcon = new L.Icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-});
-
-const driverIcon = new L.Icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-});
+// Initialize Leaflet icons once
+initializeLeafletIcons();
 
 export const RiderHome = () => {
   const [currentLocation, setCurrentLocation] = useState(null);
@@ -50,6 +27,8 @@ export const RiderHome = () => {
   const [loading, setLoading] = useState(false);
   const [rideStatus, setRideStatus] = useState(null);
   const [driverLocation, setDriverLocation] = useState(null);
+  const [vehicleType, setVehicleType] = useState('economy');
+  const [locationError, setLocationError] = useState(null);
   const mapRef = useRef(null);
   const currentRide = useRideStore((state) => state.currentRide);
   const setCurrentRide = useRideStore((state) => state.setCurrentRide);
@@ -66,11 +45,35 @@ export const RiderHome = () => {
             lng: position.coords.longitude
           };
           setCurrentLocation(location);
-          setPickupLocation(location);
+          if (!pickupLocation) {
+            setPickupLocation(location);
+          }
+          setLocationError(null);
         },
-        (error) => toast.error('Failed to get location: ' + error.message),
-        { enableHighAccuracy: true }
+        (error) => {
+          const errorMessage = getLocationErrorMessage(error);
+          setLocationError(errorMessage);
+          toast.error(errorMessage);
+          // Set default location so map can still load
+          setCurrentLocation({
+            lat: DEFAULT_MAP_CENTER[0],
+            lng: DEFAULT_MAP_CENTER[1]
+          });
+        },
+        { 
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        }
       );
+    } else {
+      setLocationError('Geolocation is not supported by your browser');
+      toast.error('Geolocation is not supported');
+      // Set default location so map can still load
+      setCurrentLocation({
+        lat: DEFAULT_MAP_CENTER[0],
+        lng: DEFAULT_MAP_CENTER[1]
+      });
     }
 
     // Listen for ride acceptance
@@ -84,6 +87,10 @@ export const RiderHome = () => {
       setRideStatus('searching');
       toast.info(data.status);
     });
+
+    return () => {
+      // Cleanup
+    };
   }, []);
 
   const handleEstimateFare = async () => {
@@ -98,13 +105,15 @@ export const RiderHome = () => {
         pickupLat: pickupLocation.lat,
         pickupLon: pickupLocation.lng,
         dropoffLat: dropoffLocation.lat,
-        dropoffLon: dropoffLocation.lng
+        dropoffLon: dropoffLocation.lng,
+        vehicleType: vehicleType
       });
 
       setFareEstimate(response.data);
       toast.success('Fare estimated successfully');
     } catch (error) {
-      toast.error('Failed to estimate fare');
+      console.error('Fare estimation error:', error.response?.data || error.message);
+      toast.error(error.response?.data?.message || 'Failed to estimate fare');
     } finally {
       setLoading(false);
     }
@@ -124,7 +133,8 @@ export const RiderHome = () => {
         dropoffLat: dropoffLocation.lat,
         dropoffLon: dropoffLocation.lng,
         pickupAddress: 'Current Location',
-        dropoffAddress: 'Destination'
+        dropoffAddress: 'Destination',
+        vehicleType: vehicleType
       });
 
       const ride = response.data.ride;
@@ -137,12 +147,20 @@ export const RiderHome = () => {
         pickupLat: pickupLocation.lat,
         pickupLon: pickupLocation.lng,
         dropoffLat: dropoffLocation.lat,
-        dropoffLon: dropoffLocation.lng
+        dropoffLon: dropoffLocation.lng,
+        vehicleType: vehicleType
       });
 
       toast.success('Ride requested! Searching for nearby drivers...');
     } catch (error) {
-      toast.error('Failed to request ride');
+      console.error('Ride request error details:', {
+        response: error.response?.data,
+        status: error.response?.status,
+        message: error.message,
+        config: error.config?.data
+      });
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to request ride';
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -174,66 +192,126 @@ export const RiderHome = () => {
   };
 
   return (
-    <div className="flex h-screen gap-4">
+    <div className="flex h-screen gap-4 bg-gray-50">
       <div className="flex-1">
         {currentLocation ? (
-          <MapContainer center={[currentLocation.lat, currentLocation.lng]} zoom={15} className="w-full h-full rounded-lg">
+          <MapContainer 
+            center={[currentLocation.lat, currentLocation.lng]} 
+            zoom={DEFAULT_ZOOM} 
+            className="w-full h-full rounded-lg"
+            style={{ zIndex: 0 }}
+          >
             <TileLayer
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              maxZoom={19}
             />
             <MapEvents />
             {pickupLocation && (
               <Marker position={[pickupLocation.lat, pickupLocation.lng]} icon={pickupIcon}>
-                <Popup>📍 Pickup Location</Popup>
+                <Popup>
+                  <div className="text-center">
+                    <strong>📍 Pickup Location</strong>
+                    <p className="text-xs text-gray-600">{pickupLocation.lat.toFixed(4)}, {pickupLocation.lng.toFixed(4)}</p>
+                  </div>
+                </Popup>
               </Marker>
             )}
             {dropoffLocation && (
               <Marker position={[dropoffLocation.lat, dropoffLocation.lng]} icon={dropoffIcon}>
-                <Popup>📍 Dropoff Location</Popup>
+                <Popup>
+                  <div className="text-center">
+                    <strong>📍 Dropoff Location</strong>
+                    <p className="text-xs text-gray-600">{dropoffLocation.lat.toFixed(4)}, {dropoffLocation.lng.toFixed(4)}</p>
+                  </div>
+                </Popup>
               </Marker>
             )}
             {driverLocation && (
               <Marker position={[driverLocation.lat, driverLocation.lng]} icon={driverIcon}>
-                <Popup>🚗 Your Driver</Popup>
+                <Popup>
+                  <div className="text-center">
+                    <strong>🚗 Your Driver</strong>
+                  </div>
+                </Popup>
               </Marker>
             )}
-            {currentLocation && rideStatus !== 'searching' && (
-              <Marker position={[currentLocation.lat, currentLocation.lng]}>
-                <Popup>📍 Your Location</Popup>
+            {currentLocation && rideStatus !== 'searching' && !pickupLocation && (
+              <Marker position={[currentLocation.lat, currentLocation.lng]} icon={currentLocationIcon}>
+                <Popup>📍 Your Current Location</Popup>
               </Marker>
             )}
           </MapContainer>
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
-            <p className="text-gray-500">Loading map...</p>
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-gray-500 mb-2">Loading map...</p>
+              {locationError && <p className="text-red-500 text-sm max-w-xs">{locationError}</p>}
+            </div>
           </div>
         )}
       </div>
 
-      <div className="w-80 bg-white shadow-lg p-6 rounded-lg overflow-y-auto">
+      <div className="w-96 bg-white shadow-lg p-6 rounded-lg overflow-y-auto">
         <h2 className="text-2xl font-bold mb-6">Book a Ride</h2>
 
         {rideStatus && (
           <div className="bg-blue-100 border border-blue-500 text-blue-700 p-3 rounded mb-4">
-            Status: <strong>{rideStatus}</strong>
+            Status: <strong>{rideStatus.toUpperCase()}</strong>
           </div>
         )}
 
         <div className="space-y-4">
+          {/* Vehicle Type Selector */}
+          <div>
+            <label className="block text-sm font-semibold mb-2">Vehicle Type</label>
+            <select
+              value={vehicleType}
+              onChange={(e) => {
+                setVehicleType(e.target.value);
+                setFareEstimate(null); // Reset fare when vehicle type changes
+              }}
+              className="w-full border border-gray-300 rounded p-2"
+            >
+              <option value="economy">🚗 Economy (₹15/km)</option>
+              <option value="premium">🚙 Premium (₹20/km)</option>
+              <option value="xl">🚐 XL (₹25/km)</option>
+            </select>
+          </div>
+
+          {/* Locations Info */}
+          <div className="bg-gray-50 p-3 rounded">
+            <p className="text-sm text-gray-600">📍 Pickup: {pickupLocation ? 'Set' : 'Not set'}</p>
+            <p className="text-sm text-gray-600">📍 Dropoff: {dropoffLocation ? 'Set' : 'Not set'}</p>
+          </div>
+
+          {/* Fare Estimate */}
           {fareEstimate && (
-            <div className="card">
-              <h3 className="font-semibold mb-2">Fare Estimate</h3>
-              <p className="text-gray-600">Distance: {fareEstimate.distance} km</p>
-              <p className="text-gray-600">Duration: {Math.round(fareEstimate.duration / 60)} min</p>
-              <p className="text-lg font-bold text-blue-600 mt-2">₹ {fareEstimate.fare.totalFare}</p>
+            <div className="card bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200">
+              <h3 className="font-semibold mb-3 text-blue-900">Fare Estimate</h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-700">Distance:</span>
+                  <span className="font-semibold">{fareEstimate.distance} km</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-700">Duration:</span>
+                  <span className="font-semibold">{Math.round(fareEstimate.duration / 60)} min</span>
+                </div>
+                <hr className="my-2" />
+                <div className="flex justify-between text-lg">
+                  <span className="text-blue-900 font-bold">Total Fare:</span>
+                  <span className="text-blue-600 font-bold">₹ {fareEstimate.fare.totalFare}</span>
+                </div>
+              </div>
             </div>
           )}
 
           <button
             onClick={handleEstimateFare}
-            disabled={loading}
-            className="btn-primary w-full"
+            disabled={loading || !pickupLocation || !dropoffLocation}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition w-full disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
             {loading ? 'Estimating...' : 'Estimate Fare'}
           </button>
@@ -241,10 +319,14 @@ export const RiderHome = () => {
           <button
             onClick={handleRequestRide}
             disabled={loading || !fareEstimate}
-            className="btn-primary w-full"
+            className="bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition w-full disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
             {loading ? 'Requesting...' : 'Request Ride'}
           </button>
+
+          <p className="text-xs text-gray-500 text-center">
+            💡 Click on map to set pickup and dropoff locations
+          </p>
         </div>
       </div>
 
