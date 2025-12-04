@@ -1,10 +1,3 @@
-// backend/socket/inMemoryStore.js
-
-/**
- * In‑memory store for quick real-time operations.
- * (MongoDB will store the final records)
- */
-
 module.exports = {
   drivers: {},     // { driverId: { socketId, lat, lng, online } }
   riders: {},      // { riderId: { socketId } }
