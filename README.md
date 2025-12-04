@@ -87,98 +87,7 @@ Design and develop a *complete real-time ride-hailing platform* (similar to Ola/
 ---
 
 ## 📁 Folder Structure
-
-
-Ride_Booking_System/
-│
-├── backend/                           # Backend (Node.js + Express)
-│   ├── server.js                      # Main server entry point
-│   ├── init-db.js                     # Database initializer
-│   ├── package.json                   # Backend dependencies
-│   ├── .env.example                   # Environment template
-│   │
-│   ├── models/                        # MongoDB Schemas
-│   │   ├── User.js                    # Base user model (discriminator parent)
-│   │   ├── Rider.js                   # Rider discriminator
-│   │   ├── Driver.js                  # Driver discriminator (GeoJSON support)
-│   │   ├── Ride.js                    # Ride booking model
-│   │   └── Price.js                   # Pricing configuration
-│   │
-│   ├── controllers/                   # Business Logic
-│   │   ├── authController.js          # Registration, login, profile
-│   │   ├── rideController.js          # Ride booking, history, status
-│   │   ├── driverController.js        # Driver profile, earnings, verification
-│   │   └── adminController.js         # Admin operations, analytics
-│   │
-│   ├── routes/                        # API Endpoints
-│   │   ├── authRoutes.js              # Auth endpoints (/api/auth/*)
-│   │   ├── rideRoutes.js              # Ride endpoints (/api/rides/*)
-│   │   ├── driverRoutes.js            # Driver endpoints (/api/drivers/*)
-│   │   └── adminRoutes.js             # Admin endpoints (/api/admin/*)
-│   │
-│   ├── middleware/                    # Custom Middleware
-│   │   ├── auth.js                    # JWT verification & role-based access
-│   │   └── errorHandler.js            # Global error handling
-│   │
-│   ├── socket/                        # WebSocket Handlers
-│   │   └── rideSocket.js              # Real-time events (11+ events)
-│   │
-│   └── utils/                         # Utility Functions
-│       ├── location.js                # Location calculations & geospatial queries
-│       └── googleMaps.js              # Google Maps API integration
-│
-├── frontend/                          # Frontend (React + Vite)
-│   ├── package.json                   # Frontend dependencies
-│   ├── vite.config.js                 # Vite configuration
-│   ├── tailwind.config.js             # Tailwind CSS config
-│   ├── postcss.config.js              # PostCSS config
-│   ├── index.html                     # HTML entry point
-│   │
-│   └── src/
-│       ├── main.jsx                   # React entry point
-│       ├── App.jsx                    # Main router & layout
-│       ├── index.css                  # Global styles
-│       │
-│       ├── pages/                     # Page Components
-│       │   ├── RiderLogin.jsx         # Rider login page
-│       │   ├── RiderRegister.jsx      # Rider registration
-│       │   ├── RiderHome.jsx          # Map-based ride booking
-│       │   ├── DriverLogin.jsx        # Driver login page
-│       │   ├── DriverRegister.jsx     # Driver registration
-│       │   └── DriverHome.jsx         # Driver availability & rides
-│       │
-│       ├── components/                # Reusable Components
-│       │   └── ProtectedRoute.jsx     # Route protection (auth check)
-│       │
-│       ├── store/                     # State Management (Zustand)
-│       │   └── index.js               # Auth, Ride, Location, Driver stores
-│       │
-│       ├── services/                  # API & WebSocket Services
-│       │   ├── api.js                 # Axios HTTP client & API calls
-│       │   └── socket.js              # Socket.io client initialization
-│       │
-│       └── assets/                    # Static assets (if any)
-│
-├── 📄 Documentation Files
-│   ├── README.md                      # This file (Project overview)
-│   ├── GETTING_STARTED.md             # Quick setup guide (START HERE)
-│   ├── SETUP_GUIDE.md                 # Detailed configuration
-│   ├── API_DOCUMENTATION.md           # 25+ API endpoints with examples
-│   ├── QUICK_REFERENCE.md             # Command cheat sheet
-│   ├── TROUBLESHOOTING.md             # Common issues & solutions
-│   ├── PROJECT_COMPLETION.md          # Feature checklist
-│   ├── DOCS_INDEX.md                  # Navigation guide
-│   ├── SYSTEM_STATUS.md               # Current system status
-│   ├── install.ps1                    # Windows setup script
-│   └── .env.example                   # Environment variables template
-│
-├── 📊 Repository Files
-│   ├── .git/                          # Git repository
-│   ├── .gitignore                     # Git ignore rules
-│   ├── package.json                   # Root dependencies
-│   └── node_modules/                  # Installed packages
-
-
+<img width="284" height="642" alt="image" src="https://github.com/user-attachments/assets/6b6c7ac7-1441-4744-bbbc-e71182cc8f12" /><br>
 
 ---
 
@@ -811,4 +720,5 @@ A complete, production-ready real-time ride-hailing platform built with modern w
 *Version:* 1.0.0
 
 ---
+
 
