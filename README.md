@@ -293,6 +293,9 @@ Navigate to *http://localhost:5173* in your browser.
 ---
 
 ## 📸 Screenshots (Placeholders)
+<img width="1088" height="548" alt="image" src="https://github.com/user-attachments/assets/1267d283-c832-4381-b0ba-633705b4d058" /><br>
+<img width="1075" height="541" alt="image" src="https://github.com/user-attachments/assets/388f0141-8bbb-4d40-ae64-67555a9dfb1f" />
+
 
 Screenshots will be added here during final submission
 
@@ -808,3 +811,4 @@ A complete, production-ready real-time ride-hailing platform built with modern w
 *Version:* 1.0.0
 
 ---
+
