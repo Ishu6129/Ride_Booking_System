@@ -1,23 +1,22 @@
-body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
-.app header { display:flex; justify-content:space-between; align-items:center; padding:12px 20px; background:#0f172a; color:white; }
-main { display:flex; gap:16px; padding:16px; }
-.map-wrap { flex: 1; }
-.panel { width:320px; padding:12px; border-left:1px solid #ddd; }
-.popup {
-  position: fixed;
-  right: 20px;
-  top: 80px;
-  background: white;
-  border: 1px solid #ccc;
+.app {
+  display: flex;
+  height: 100vh;
+  gap: 12px;
   padding: 12px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.12);
-  z-index: 1000;
-  width: 260px;
+  box-sizing: border-box;
 }
-.btn { padding:8px 12px; border:none; cursor:pointer; }
-.btn-online { background:#10b981; color:white; }
-.btn-offline { background:#ef4444; color:white; }
-.btn-accept { background:#059669; color:white; }
-.btn-reject { background:#b91c1c; color:white; }
-.btn-start { background:#2563eb; color:white; }
-.btn-end { background:#ef4444; color:white; }
+.left {
+  width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.mapWrap {
+  flex: 1;
+}
+button { padding: 8px 12px; cursor: pointer; }
+.popup {
+  background: #fff; padding: 10px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+.info { margin-bottom: 8px; }
+.small { font-size: 0.9rem; color: #555; }
